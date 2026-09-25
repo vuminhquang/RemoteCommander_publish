@@ -1,0 +1,10 @@
+{
+  "name": "remote-commander-linux-x64",
+  "version": "0.1.0",
+  "description": "RemoteCommander binary for linux-x64 (installed by the remote-commander package)",
+  "license": "UNLICENSED",
+  "os": ["linux"],
+  "cpu": ["x64"],
+  "files": ["bin"],
+  "preferUnplugged": true
+}

@@ -1,0 +1,19 @@
+# Every push and pull request: the public repo takes built packages only.
+name: guard
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only the publish branch exists here
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/publish'
+        run: |
+          echo "::error::this repository only has the publish branch (${GITHUB_REF} refused)"
+          exit 1
+      - uses: actions/checkout@v4
+      - name: No source, only built packages
+        run: bash .github/guard.sh

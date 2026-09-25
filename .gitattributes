@@ -1,0 +1,2 @@
+# Prebuilt executables: never diff or normalise them
+packages/**/bin/remote-commander-mcp* binary

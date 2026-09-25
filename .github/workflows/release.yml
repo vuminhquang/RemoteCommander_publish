@@ -1,0 +1,80 @@
+# A tag vX.Y.Z on the publish branch: check the tree, run every binary on
+# its own OS, then publish to npm with trusted publishing (OIDC, provenance).
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash .github/guard.sh
+      - name: Tag matches the package version
+        run: |
+          version="$(node -p "require('./packages/remote-commander/package.json').version")"
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "::error::tag $GITHUB_REF_NAME, packages $version"; exit 1; }
+
+  smoke:
+    needs: guard
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { os: ubuntu-latest,    pkg: linux-x64 }
+          - { os: ubuntu-24.04-arm, pkg: linux-arm64 }
+          - { os: macos-latest,     pkg: darwin-arm64 }
+          - { os: macos-13,         pkg: darwin-x64 }
+          - { os: windows-latest,   pkg: win32-x64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: The binary runs here
+        shell: bash
+        run: |
+          dir="packages/remote-commander-${{ matrix.pkg }}"
+          [ -d "$dir" ] || { echo "::warning::no $dir in this release"; exit 0; }
+          chmod +x "$dir"/bin/* || true
+          "$dir"/bin/remote-commander-mcp* --version
+      - name: npx runs it through the launcher
+        shell: bash
+        run: |
+          dir="packages/remote-commander-${{ matrix.pkg }}"
+          [ -d "$dir" ] || exit 0
+          work="$(mktemp -d)"
+          (cd "$dir" && npm pack --pack-destination "$work" >/dev/null)
+          (cd packages/remote-commander && npm pack --pack-destination "$work" >/dev/null)
+          cd "$work" && npm init -y >/dev/null
+          npm install --no-audit --no-fund --omit=optional ./remote-commander-*.tgz
+          npx remote-commander --version
+
+  publish:
+    needs: smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: npm with trusted publishing
+        run: npm install -g npm@latest
+      - name: Publish platform packages, then the launcher
+        shell: bash
+        run: |
+          for dir in packages/remote-commander-*/ packages/remote-commander/; do
+            name="$(node -p "require('./$dir/package.json').name")"
+            version="$(node -p "require('./$dir/package.json').version")"
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version already published"
+              continue
+            fi
+            (cd "$dir" && npm publish --provenance --access public)
+          done

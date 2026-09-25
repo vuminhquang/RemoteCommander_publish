@@ -1,0 +1,10 @@
+{
+  "name": "remote-commander-win32-x64",
+  "version": "0.1.0",
+  "description": "RemoteCommander binary for win32-x64 (installed by the remote-commander package)",
+  "license": "UNLICENSED",
+  "os": ["win32"],
+  "cpu": ["x64"],
+  "files": ["bin"],
+  "preferUnplugged": true
+}
