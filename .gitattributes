@@ -1,2 +1,4 @@
+# Text stays LF on every OS
+* text=auto eol=lf
 # Prebuilt executables: never diff or normalise them
 packages/**/bin/remote-commander-mcp* binary
