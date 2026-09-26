@@ -1,5 +1,7 @@
 # A tag vX.Y.Z on the publish branch: check the tree, run every binary on
-# its own OS, then publish to npm with trusted publishing (OIDC, provenance).
+# its own OS, then STAGE the version on npm with trusted publishing (OIDC,
+# provenance). The owner approves it with 2FA (`npm stage approve <id>`);
+# CI can never put a version live by itself.
 name: release
 on:
   push:
@@ -60,7 +62,7 @@ jobs:
           registry-url: https://registry.npmjs.org
       - name: npm with trusted publishing
         run: npm install -g npm@latest
-      - name: Publish remote-commander
+      - name: Stage remote-commander for the owner's 2FA approval
         shell: bash
         working-directory: packages/remote-commander
         run: |
@@ -69,4 +71,4 @@ jobs:
             echo "remote-commander@$version already published"
             exit 0
           fi
-          npm publish --provenance --access public
+          npm stage publish --provenance --access public
