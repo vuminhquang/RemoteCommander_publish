@@ -33,23 +33,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
-      - name: The binary runs here
+      - name: The binary runs here, through the launcher
         shell: bash
         run: |
-          dir="packages/remote-commander-${{ matrix.pkg }}"
+          dir="packages/remote-commander/bin/${{ matrix.pkg }}"
           [ -d "$dir" ] || { echo "::warning::no $dir in this release"; exit 0; }
-          chmod +x "$dir"/bin/* || true
-          "$dir"/bin/remote-commander-mcp* --version
-      - name: npx runs it through the launcher
-        shell: bash
-        run: |
-          dir="packages/remote-commander-${{ matrix.pkg }}"
-          [ -d "$dir" ] || exit 0
+          chmod +x "$dir"/* || true
+          "$dir"/remote-commander-mcp* --version
           work="$(mktemp -d)"
-          (cd "$dir" && npm pack --pack-destination "$work" >/dev/null)
           (cd packages/remote-commander && npm pack --pack-destination "$work" >/dev/null)
           cd "$work" && npm init -y >/dev/null
-          npm install --no-audit --no-fund --omit=optional ./remote-commander-*.tgz
+          npm install --no-audit --no-fund ./remote-commander-*.tgz
           npx remote-commander --version
 
   publish:
@@ -66,15 +60,13 @@ jobs:
           registry-url: https://registry.npmjs.org
       - name: npm with trusted publishing
         run: npm install -g npm@latest
-      - name: Publish platform packages, then the launcher
+      - name: Publish remote-commander
         shell: bash
+        working-directory: packages/remote-commander
         run: |
-          for dir in packages/remote-commander-*/ packages/remote-commander/; do
-            name="$(node -p "require('./$dir/package.json').name")"
-            version="$(node -p "require('./$dir/package.json').version")"
-            if npm view "$name@$version" version >/dev/null 2>&1; then
-              echo "$name@$version already published"
-              continue
-            fi
-            (cd "$dir" && npm publish --provenance --access public)
-          done
+          version="$(node -p "require('./package.json').version")"
+          if npm view "remote-commander@$version" version >/dev/null 2>&1; then
+            echo "remote-commander@$version already published"
+            exit 0
+          fi
+          npm publish --provenance --access public

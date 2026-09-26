@@ -1,34 +1,26 @@
 #!/usr/bin/env node
-// Runs the RemoteCommander binary for this OS and CPU. npm installs exactly
-// one of the platform packages (optionalDependencies, filtered by os/cpu).
+// Runs the RemoteCommander binary for this OS and CPU; the package carries
+// one prebuilt binary per platform under bin/<os>-<cpu>/.
 "use strict";
 
 const { spawnSync } = require("node:child_process");
+const fs = require("node:fs");
 const path = require("node:path");
 
-const PLATFORMS = {
-  "win32-x64": "remote-commander-win32-x64",
-  "win32-arm64": "remote-commander-win32-arm64",
-  "darwin-x64": "remote-commander-darwin-x64",
-  "darwin-arm64": "remote-commander-darwin-arm64",
-  "linux-x64": "remote-commander-linux-x64",
-  "linux-arm64": "remote-commander-linux-arm64",
-};
-const BINARY = process.platform === "win32" ? "remote-commander-mcp.exe" : "remote-commander-mcp";
 const EXIT_FAILURE = 1;
-
 const key = `${process.platform}-${process.arch}`;
-const pkg = PLATFORMS[key];
-if (!pkg) {
-  console.error(`remote-commander: no build for ${key} yet (have: ${Object.keys(PLATFORMS).join(", ")})`);
-  process.exit(EXIT_FAILURE);
-}
+const binary = path.join(
+  __dirname,
+  key,
+  process.platform === "win32" ? "remote-commander-mcp.exe" : "remote-commander-mcp",
+);
 
-let binary;
-try {
-  binary = path.join(path.dirname(require.resolve(`${pkg}/package.json`)), "bin", BINARY);
-} catch {
-  console.error(`remote-commander: ${pkg} is not installed; reinstall without --no-optional`);
+if (!fs.existsSync(binary)) {
+  const have = fs
+    .readdirSync(__dirname, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+  console.error(`remote-commander: no build for ${key} yet (have: ${have.join(", ")})`);
   process.exit(EXIT_FAILURE);
 }
 

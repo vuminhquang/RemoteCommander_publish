@@ -17,9 +17,8 @@ ALLOWED=(
   '^packages/remote-commander/package\.json$'
   '^packages/remote-commander/README\.md$'
   '^packages/remote-commander/bin/remote-commander\.js$'
-  '^packages/remote-commander-(win32|darwin|linux)-(x64|arm64)/package\.json$'
-  '^packages/remote-commander-(win32)-(x64|arm64)/bin/remote-commander-mcp\.exe$'
-  '^packages/remote-commander-(darwin|linux)-(x64|arm64)/bin/remote-commander-mcp$'
+  '^packages/remote-commander/bin/win32-(x64|arm64)/remote-commander-mcp\.exe$'
+  '^packages/remote-commander/bin/(darwin|linux)-(x64|arm64)/remote-commander-mcp$'
 )
 # The one script shipped as text: the launcher; it must stay small
 MAX_LAUNCHER_BYTES=4096
@@ -45,7 +44,7 @@ done
 
 # Binaries must be compiled executables (PE, ELF, Mach-O), not scripts or text
 for file in "${files[@]}"; do
-  [[ "$file" == */bin/remote-commander-mcp* ]] || continue
+  [[ "$file" == */remote-commander-mcp || "$file" == */remote-commander-mcp.exe ]] || continue
   magic="$(head -c 4 "$file" | od -An -tx1 | tr -d ' \n')"
   case "$magic" in
     4d5a*) ;;                       # PE (MZ)

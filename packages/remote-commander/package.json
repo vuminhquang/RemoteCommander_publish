@@ -5,6 +5,5 @@
   "license": "UNLICENSED",
   "bin": { "remote-commander": "bin/remote-commander.js" },
   "files": ["bin", "README.md"],
-  "engines": { "node": ">=18" },
-  "optionalDependencies": { "remote-commander-win32-x64": "0.1.0", "remote-commander-darwin-x64": "0.1.0", "remote-commander-darwin-arm64": "0.1.0", "remote-commander-linux-x64": "0.1.0", "remote-commander-linux-arm64": "0.1.0" }
+  "engines": { "node": ">=18" }
 }
