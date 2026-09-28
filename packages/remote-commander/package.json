@@ -1,6 +1,6 @@
 {
   "name": "remote-commander",
-  "version": "0.3.9",
+  "version": "0.4.0",
   "description": "Connect your computer to ChatGPT, Claude and other MCP clients: npx remote-commander@latest remote",
   "license": "UNLICENSED",
   "repository": { "type": "git", "url": "git+https://github.com/vuminhquang/RemoteCommander_publish.git" },
