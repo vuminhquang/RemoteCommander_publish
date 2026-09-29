@@ -42,7 +42,9 @@ for file in "${files[@]}"; do
   [[ $ok -eq 1 ]] || say "not allowed in the public repo: $file"
 done
 
-# Binaries must be compiled executables (PE, ELF, Mach-O), not scripts or text
+# Binaries must be compiled executables (PE, ELF, Mach-O), not scripts or text.
+# Unix/macOS binaries must also be executable in the Git tree. npm publishes
+# from this tree, so a 100644 mode would produce an EACCES install for users.
 for file in "${files[@]}"; do
   [[ "$file" == */remote-commander-mcp || "$file" == */remote-commander-mcp.exe ]] || continue
   magic="$(head -c 4 "$file" | od -An -tx1 | tr -d ' \n')"
@@ -52,6 +54,15 @@ for file in "${files[@]}"; do
     cffaedfe|cefaedfe|cafebabe) ;;  # Mach-O 64/32, fat
     *) say "not a compiled executable: $file ($magic)" ;;
   esac
+
+  if [[ "$file" == */remote-commander-mcp ]]; then
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      mode="$(git ls-files --stage -- "$file" | awk 'NR == 1 { print $1 }')"
+      [[ "$mode" == "100755" ]] || say "not executable in Git: $file (mode ${mode:-missing}, want 100755)"
+    else
+      [[ -x "$file" ]] || say "not executable: $file"
+    fi
+  fi
 done
 
 if [[ -f "$LAUNCHER" ]] && [[ $(wc -c <"$LAUNCHER") -gt $MAX_LAUNCHER_BYTES ]]; then

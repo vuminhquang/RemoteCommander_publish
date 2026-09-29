@@ -48,7 +48,15 @@ jobs:
         run: |
           dir="packages/remote-commander/bin/${{ matrix.pkg }}"
           [ -d "$dir" ] || { echo "::warning::no $dir in this release"; exit 0; }
-          chmod +x "$dir"/* || true
+          # Never repair release artifacts in smoke: the checkout must already
+          # carry the executable bit that npm users will receive.
+          if [[ "${{ matrix.pkg }}" != win32-* ]]; then
+            [ -x "$dir/remote-commander-mcp" ] || {
+              echo "::error::$dir/remote-commander-mcp is not executable in the release tree"
+              git ls-files --stage -- "$dir/remote-commander-mcp"
+              exit 1
+            }
+          fi
           "$dir"/remote-commander-mcp* --version
           work="$(mktemp -d)"
           (cd packages/remote-commander && npm pack --pack-destination "$work" >/dev/null)
